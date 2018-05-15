@@ -32,7 +32,7 @@ namespace LoginCountApp
             {
                 int count = 0;
                 userLog = Path.GetFileName(files[i]);
-                if (File.GetLastWriteTime(filePath + userLog) < previousMonth)
+                if (File.GetLastWriteTime(filePath + userLog) > previousMonth)
                 {
                     //Only scans files that have been modified in the last month
                 }
@@ -93,12 +93,15 @@ namespace LoginCountApp
 
         private static bool IsDate(string input)
         {
-            DateTime results;
-            if (DateTime.TryParse(input, out results))
+            try
             {
+                Convert.ToDateTime(input);
                 return true;
             }
-            return false;
+            catch
+            {
+                return false;
+            }
         }
     }
 }

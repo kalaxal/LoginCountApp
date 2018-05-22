@@ -11,36 +11,155 @@ namespace LoginCountApp
     {
         static void Main(string[] args)
         {
+            GetLastMonth();
 
-            SearchFiles();
-
+            if (IsValid())
+            {
+                if ()
+                {
+                }
+            }
 
             Console.ReadKey();
         }
 
-        private static void SearchFiles()
+        private static DateTime GetLastMonth()
         {
             DateTime currentDate = DateTime.Now;
-            DateTime previousMonth = currentDate.AddMonths(-1);
+            return currentDate.AddMonths(-1);
+        }
 
-            DateTime fileModified = File.GetLastWriteTime("current file being scanned");
-            string filePath = @"D:\Trey\Documents\School 2017-2018\WorkStudy\users\";
+        private static bool IsValid()
+        {
+            
+
+            RecentlyModified()
+        }
+
+        private static string[] GetFileList()
+        {
+            string filePath = GetPath();
             string[] files = Directory.GetFiles(filePath, "*.txt");
-            string userLog;
+            return files;
+        }
+
+        private static string GetPath()
+        {
+            string[] config = File.ReadAllLines(@"D:\Trey\Documents\School 2017-2018\WorkStudy\CountAppConfig.txt");
+            return config[0];
+        }
+
+        private static string[,] GetComputerList()
+        {
+            string[] config = File.ReadAllLines(@"D:\Trey\Documents\School 2017-2018\WorkStudy\CountAppConfig.txt");
+
+            string[,] computerConfig = new string[config.Length, 2];
+            for (int i = 1; i < config.Length; i++)
+            {
+                string[] temp = config[i].Split(' ');
+                computerConfig[i,0] = temp[0];
+                computerConfig[i,1] = temp[1];
+
+            }
+            return computerConfig;
+        }
+
+        private static List<string> RecentlyModified()
+        {
+            string[] files = GetFileList();
+            List<string> currentFiles = new List<string>();
+            for (int i = 0; i < files.Length; i++)
+            {
+                if (File.GetLastWriteTime(files[i]) < GetLastMonth()) {
+                    currentFiles.Add(files[i]);
+                }
+            }
+            return currentFiles;
+        }
+
+        private static void SearchFiles()
+        {
+            List<string> files = RecentlyModified();
+            for (int i = 0; i < files.Count; i++)
+            {
+                string[] lines = File.ReadAllLines(files[i]);
+                Sanitize(lines);
+            }
+
+
+        }
+
+        private static void Sanitize(string[] lines, string user)
+        {
+            //string[,,] log = new string[];
+            int line = 0;
+            int loginIndex = 0;
+            int logoutIndex = 0;
+            bool computer = false;
+            bool date = false;
+            string[,] computers = GetComputerList();
+            while (line < lines.Length)
+            {
+                int start = lines[line].IndexOf("Login", logoutIndex); //get index of word login
+                int end = lines[line].IndexOf("Logout", loginIndex);
+                for (int i = start; i < end; i++)
+                {
+                    if (computers[i,0].Contains(lines[line]))
+                    {
+                        // If the computer is on list record it if not ignore it
+                        computer = true;
+                    }
+                    string foundDate = lines[line].Substring(lines[line].IndexOf(' ') + 1); //find space grab all after
+
+                    if (ValidDate(foundDate))
+                    {
+                        date = true;
+                    }
+                }
+                if (computer && date)
+                {
+                    // take note
+                }
+                ++line;
+            }
+        }
+
+        private static bool ValidDate(string input)
+        {
+            if (IsDate(input))
+            {
+                DateTime date = Convert.ToDateTime(input); //then convert to datetime
+                if (date > GetLastMonth())
+                {
+                    return true;
+                }
+                //Console.WriteLine($"User: {userLogName} NextLine: {nextLine} Year: {date.Year} Month: {date.Month} ");
+            }
+            return false;
+        }
+
+        private static bool IsDate(string input)
+        {
+            try
+            {
+                Convert.ToDateTime(input);
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        /*
+        string userLog;
             string userLogName;
             for (int i = 0; i < files.Length; ++i)
             {
                 int count = 0;
                 userLog = Path.GetFileName(files[i]);
-                if (File.GetLastWriteTime(filePath + userLog) > previousMonth)
-                {
-                    //Only scans files that have been modified in the last month
-                }
                 
                 userLogName = Path.GetFileNameWithoutExtension(files[i]);
-                string[] lines = File.ReadAllLines (filePath + userLog);
-                // process text
-                Sanitize(lines);
 
 
                 /*
@@ -67,41 +186,12 @@ namespace LoginCountApp
                         
                         
                     }
-                }*/
+                }
                 Console.WriteLine(userLog + count);
             }
 
-        }
+        }*/
 
-        private static void Sanitize(string[] lines)
-        {
-            int line = 0;
-            while (line < lines.Length)
-            {
-                if(lines[line].Equals("Login"))
-                {
 
-                }
-                ++line;
-            }
-            //Console.WriteLine(lines);
-            //int lineLength = lines.Length;
-            //lines.Split(string["Logout"]);
-            //string block = lines.Substring(lines.IndexOf("Login"), lines.IndexOf("Logoff"));
-            //Console.WriteLine(block);
-        }
-
-        private static bool IsDate(string input)
-        {
-            try
-            {
-                Convert.ToDateTime(input);
-                return true;
-            }
-            catch
-            {
-                return false;
-            }
-        }
     }
 }

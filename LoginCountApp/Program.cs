@@ -11,15 +11,8 @@ namespace LoginCountApp
     {
         static void Main(string[] args)
         {
-            GetLastMonth();
-
-            if (IsValid())
-            {
-                if ()
-                {
-                }
-            }
-
+            SearchFiles();
+            Console.WriteLine("Done");
             Console.ReadKey();
         }
 
@@ -29,37 +22,29 @@ namespace LoginCountApp
             return currentDate.AddMonths(-1);
         }
 
-        private static bool IsValid()
-        {
-            
-
-            RecentlyModified()
-        }
-
         private static string[] GetFileList()
         {
             string filePath = GetPath();
-            string[] files = Directory.GetFiles(filePath, "*.txt");
+            string[] files = Directory.GetFiles(@filePath, "*.txt");
             return files;
         }
 
         private static string GetPath()
         {
-            string[] config = File.ReadAllLines(@"D:\Trey\Documents\School 2017-2018\WorkStudy\CountAppConfig.txt");
+            string[] config = File.ReadAllLines(@"CountAppConfig.txt");
             return config[0];
         }
 
         private static string[,] GetComputerList()
         {
-            string[] config = File.ReadAllLines(@"D:\Trey\Documents\School 2017-2018\WorkStudy\CountAppConfig.txt");
+            string[] config = File.ReadAllLines(@"CountAppConfig.txt");
 
             string[,] computerConfig = new string[config.Length, 2];
-            for (int i = 1; i < config.Length; i++)
+            for (int i = 0; i < config.Length; i++)
             {
                 string[] temp = config[i].Split(' ');
                 computerConfig[i,0] = temp[0];
                 computerConfig[i,1] = temp[1];
-
             }
             return computerConfig;
         }
@@ -70,7 +55,7 @@ namespace LoginCountApp
             List<string> currentFiles = new List<string>();
             for (int i = 0; i < files.Length; i++)
             {
-                if (File.GetLastWriteTime(files[i]) < GetLastMonth()) {
+                if (File.GetLastWriteTime(files[i]) > GetLastMonth()) {
                     currentFiles.Add(files[i]);
                 }
             }
@@ -83,45 +68,73 @@ namespace LoginCountApp
             for (int i = 0; i < files.Count; i++)
             {
                 string[] lines = File.ReadAllLines(files[i]);
-                Sanitize(lines);
+                //ProcessLog(lines, files[i].Substring(files[i].LastIndexOf('\\'), files[i].IndexOf('.')));
+                ProcessLog(lines, Path.GetFileNameWithoutExtension(files[i]));
             }
-
-
         }
 
-        private static void Sanitize(string[] lines, string user)
+        private static void ProcessLog(string[] lines, string user)
         {
-            //string[,,] log = new string[];
-            int line = 0;
+            //int line = 0;
             int loginIndex = 0;
             int logoutIndex = 0;
-            bool computer = false;
-            bool date = false;
             string[,] computers = GetComputerList();
-            while (line < lines.Length)
+
+            while (/*line*/logoutIndex > -1)
             {
-                int start = lines[line].IndexOf("Login", logoutIndex); //get index of word login
-                int end = lines[line].IndexOf("Logout", loginIndex);
-                for (int i = start; i < end; i++)
+                //Console.Write(".");
+                loginIndex = Array.IndexOf(lines, "Login ", logoutIndex); //get index of word login
+                logoutIndex = Array.IndexOf(lines, "Logout ", loginIndex);
+
+                GetCurrLog(user, computers, lines, loginIndex, logoutIndex);
+
+                //line = Array.IndexOf(lines, "Login ", logoutIndex);
+            }
+        }
+
+        private static bool GetCurrLog(string user, string[,] computers, string[] lines, int loginIndex, int logoutIndex)
+        {
+            bool compIsValid = false;
+            bool dateIsValid = false;
+            string computerName = "";
+            string computerLocation = "";
+            DateTime logIn = DateTime.Today;
+
+            for (int currLine = loginIndex; currLine < logoutIndex; currLine++)
+            {
+                for (int comp = 0; comp < computers.GetLength(0); comp++)
                 {
-                    if (computers[i,0].Contains(lines[line]))
+                    //if lines[currLine].Trim() matches patter add to object
+
+
+                    if (computers[comp, 0].Equals(lines[currLine].Trim()) && compIsValid == false)
                     {
                         // If the computer is on list record it if not ignore it
-                        computer = true;
+                        //TODO find a way to break out if it is found
+                        computerName = computers[comp, 0];
+                        computerLocation = computers[comp, 1];
+                        compIsValid = true;
                     }
-                    string foundDate = lines[line].Substring(lines[line].IndexOf(' ') + 1); //find space grab all after
+                }
 
-                    if (ValidDate(foundDate))
-                    {
-                        date = true;
-                    }
-                }
-                if (computer && date)
+                //DateTime foundDate = Convert.ToDateTime(lines[currLine].Substring(lines[currLine].IndexOf(' ') + 1)); //find space grab all after
+
+                if (ValidDate(lines[currLine].Substring(lines[currLine].IndexOf(' ') + 1)))
                 {
-                    // take note
+                    //add
+                    logIn = Convert.ToDateTime(lines[currLine].Substring(lines[currLine].IndexOf(' ') + 1) + lines[currLine + 1]);
+                    dateIsValid = true;
                 }
-                ++line;
             }
+            if (compIsValid && dateIsValid)
+            {
+
+                //TODO write data to db or csv
+                string LogLine = user + ", " + computerName + ", " + computerLocation + ", " + logIn;
+                Console.WriteLine(LogLine);
+                return true;
+            }
+            return false;
         }
 
         private static bool ValidDate(string input)
@@ -133,7 +146,6 @@ namespace LoginCountApp
                 {
                     return true;
                 }
-                //Console.WriteLine($"User: {userLogName} NextLine: {nextLine} Year: {date.Year} Month: {date.Month} ");
             }
             return false;
         }
@@ -150,48 +162,5 @@ namespace LoginCountApp
                 return false;
             }
         }
-
-        /*
-        string userLog;
-            string userLogName;
-            for (int i = 0; i < files.Length; ++i)
-            {
-                int count = 0;
-                userLog = Path.GetFileName(files[i]);
-                
-                userLogName = Path.GetFileNameWithoutExtension(files[i]);
-
-
-                /*
-                for(int line = 0; line < lines.Length - 1; ++line)
-                {
-                    string newLine = lines[line].ToLower().Trim();
-                    userLogName = userLogName.ToLower().Trim();
-                     
-                    if (newLine.Equals(userLogName))
-                    {
-                        string nextLine = lines[line + 1];
-                        string foundDate = nextLine.Substring(nextLine.IndexOf(' ') + 1); //find space grab all after
-
-                        // Need to create a check to make sure the next line is a date
-                        if(IsDate(foundDate))
-                        {
-                            DateTime date = Convert.ToDateTime(foundDate); //then convert to datetime
-                            if (date.Year == year && date.Month == month)
-                            {
-                                ++count;
-                            }
-                            //Console.WriteLine($"User: {userLogName} NextLine: {nextLine} Year: {date.Year} Month: {date.Month} ");
-                        }
-                        
-                        
-                    }
-                }
-                Console.WriteLine(userLog + count);
-            }
-
-        }*/
-
-
     }
 }
